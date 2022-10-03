@@ -1,50 +1,37 @@
-# use ui file 'C:\Users\orhan\PycharmProjects\imageProcessingPixelation\ui_desing_file\design_file_pixelation.ui'
-# 1) The user is asked to write the file path of the image he wants to process.
-# 2) The size information of the image is saved in the predetermined "row_image" (row) and "column_image" variables.
-# 3) a function checks if the image is grayscale or RGB and if it is grayscale the "image_gray_scale"
-# variable is false if not true. print image is grayscale or RGB is printed.
-# 4) The values that the user wants to divide the photo into parcels according to the "block_vertical"
-# "block_horizontal" values are taken from the user. The vertical length value to the "block_vertical"
-# variable is assigned the horizontal length value to the "block_horizontal" variable. These values
-# are assigned to the "block_dim_tuple" variable.
-# 5) The image is zoned according to the "block_dim_tuple" values. Each region is zoned so that the
-# average of the colors there is in its color.
-# 6) the new image output is saved to the specified file path.
-
 import sys
 
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from image_processing.imageprocessing import ImageProcessing
-from ui_desing_file.design_file_pixelation import Ui_MainWindow
+from image_pixelation.imageprocessing import ImageProcessing
+from ui.design_file_pixelation import Ui_MainWindow
 
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.image = None
+        self.pixel_dimens = 0
+        self.pixel_height = 0
+        self.pixel_width = 0
         self.file_path = ""
-        self.block_dim_tuple = 0
-        self.block_horizontal = 0
-        self.block_vertical = 0
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.pushButton.clicked.connect(self.open_file)
-        self.ui.push_button_update.clicked.connect(self.update_image)
+        self.ui.pushButton.clicked.connect(self.select_file)
+        self.ui.push_button_pixelate.clicked.connect(self.pixelate_image)
 
-    def open_file(self):
-        self.file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.bmp)")
+    def select_file(self):
+        self.file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.jpeg *.bmp)")
         self.image = ImageProcessing(self.file_path)
-        self.image.show_image(self.ui.graphics_view_input)
+        self.image.show_image(self.ui.graphics_view_image)
 
-    def update_image(self):
+    def pixelate_image(self):
         try:
-            self.block_vertical = int(self.ui.line_edit_vertical.text())
-            self.block_horizontal = int(self.ui.line_edit_horizontal.text())
-            self.block_dim_tuple = (self.block_vertical, self.block_horizontal)
-            self.image.pixelate_image(self.block_dim_tuple)
-            self.image.show_image(self.ui.graphics_view_output)
+            self.pixel_width = int(self.ui.line_edit_width.text())
+            self.pixel_height = int(self.ui.line_edit_height.text())
+            self.pixel_dimens = (self.pixel_width, self.pixel_height)
+            self.image.pixelate_image(self.pixel_dimens)
+            self.image.show_image(self.ui.graphics_view_image)
         except ValueError:
             QMessageBox.warning(self, "Warning", "Please enter a number")
 
