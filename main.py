@@ -10,6 +10,7 @@
 # 5) The image is zoned according to the "block_dim_tuple" values. Each region is zoned so that the
 # average of the colors there is in its color.
 # 6) the new image output is saved to the specified file path.
+# without cv2
 
 import sys
 
@@ -25,9 +26,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__()
         self.image = None
         self.file_path = ""
-        self.block_dim_tuple = 0
-        self.block_horizontal = 0
-        self.block_vertical = 0
+        self.block_dim_tuple_user = 0
+        self.block_horizontal_user = 0
+        self.block_vertical_user = 0
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.open_file)
@@ -40,10 +41,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_image(self):
         try:
-            self.block_vertical = int(self.ui.line_edit_vertical.text())
-            self.block_horizontal = int(self.ui.line_edit_horizontal.text())
-            self.block_dim_tuple = (self.block_vertical, self.block_horizontal)
-            self.image.pixelate_image(self.block_dim_tuple)
+            self.block_vertical_user = int(self.ui.line_edit_vertical.text())
+            self.block_horizontal_user = int(self.ui.line_edit_horizontal.text())
+            self.block_dim_tuple_user = (self.block_vertical_user, self.block_horizontal_user)
+            # take pixelate image function result and show image
+            self.image.pixelate_image(self.block_dim_tuple_user)
             self.image.show_image(self.ui.graphics_view_output)
         except ValueError:
             QMessageBox.warning(self, "Warning", "Please enter a number")
