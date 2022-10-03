@@ -11,7 +11,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.image = None
-        self.pixel_dimens = 0
+        self.pixelation_dimens = 0
         self.pixel_height = 0
         self.pixel_width = 0
         self.file_path = ""
@@ -29,8 +29,8 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             self.pixel_width = int(self.ui.line_edit_width.text())
             self.pixel_height = int(self.ui.line_edit_height.text())
-            self.pixel_dimens = (self.pixel_width, self.pixel_height)
-            self.image.pixelate_image(self.pixel_dimens)
+            self.pixelation_dimens = (self.pixel_width, self.pixel_height)
+            self.image.pixelate_image(self.pixelation_dimens)
             self.image.show_image(self.ui.graphics_view_image)
         except ValueError:
             QMessageBox.warning(self, "Warning", "Please enter a number")

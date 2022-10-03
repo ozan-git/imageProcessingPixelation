@@ -1,7 +1,5 @@
 import cv2
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtGui import QImage, QPixmap
-
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 class ImageProcessing:
     def __init__(self, file_path):
@@ -15,9 +13,15 @@ class ImageProcessing:
         else:
             print("Image is RGB")
 
-    def pixelate_image(self, pixel_dimens):
-        self.image = cv2.resize(self.image, pixel_dimens, interpolation=cv2.INTER_NEAREST)
-        self.image = cv2.resize(self.image, (self.image_height, self.image_width), interpolation=cv2.INTER_NEAREST)
+    def pixelate_image(self, pixelation_dimens):
+        # Check if scaled_dimens are bigger then zero
+        if pixelation_dimens[0] > 0 and pixelation_dimens[1] > 0:
+            # Scale image to a lower ratio base on pixelation area.
+            # Then scale it back to original size to get pixelated image.
+            scaled_dimens = (self.image_width // pixelation_dimens[0], self.image_height // pixelation_dimens[1])
+
+            self.image = cv2.resize(self.image, scaled_dimens, interpolation=cv2.INTER_NEAREST)
+            self.image = cv2.resize(self.image, (self.image_height, self.image_width), interpolation=cv2.INTER_NEAREST)
 
     def show_image(self, graphics_view):
         if self.image_gray_scale:
@@ -29,4 +33,4 @@ class ImageProcessing:
         graphics_view.scene = QtWidgets.QGraphicsScene()
         graphics_view.scene.addPixmap(pixmap)
         graphics_view.setScene(graphics_view.scene)
-        graphics_view.show()
+        graphics_view.fitInView(graphics_view.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
