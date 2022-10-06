@@ -10,7 +10,11 @@
 # 5) The image is zoned according to the "block_dim_tuple" values. Each region is zoned so that the
 # average of the colors there is in its color.
 # 6) the new image output is saved to the specified file path.
-# without cv2
+# Subject of this project is pixelation of image. The image is divided into small parts and the average of the colors
+# in each part is taken and the color of the part is changed to the average color. The image is pixelated. We use
+# the cv2 library to read the image and the numpy library to process the image. The image is divided into small parts
+# and the average of the colors in each part is taken and the color of the part is changed to the average color.
+
 
 import sys
 

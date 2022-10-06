@@ -4,6 +4,13 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QImage
 
 
+def check_image_is_gray_scale(image):
+    if len(image) == 2:
+        return True
+    else:
+        return False
+
+
 class ImageProcessing:
     def __init__(self, file_path):
         self.file_path = file_path
@@ -12,14 +19,12 @@ class ImageProcessing:
         self.row_image, self.column_image, self.channel_image = self.image.shape
         self.image_gray_scale = False
         print(self.row_image, self.column_image, self.channel_image)
-        # if image is grayscale
-        if self.image.shape[2] == 1:
-            self.image_gray_scale = True
-            print("Image is grayscale")
-        # if image is RGB
+
+        self.image_gray_scale = check_image_is_gray_scale(self.image.shape)
+        if self.image_gray_scale:
+            print("Grayscale")
         else:
-            self.image_gray_scale = False
-            print("Image is RGB")
+            print("RGB")
 
     def pixelate_image(self, block_dim_tuple_user):
         # The image is divided into blocks according to the block_dim_tuple values. Each region is zoned so that the
@@ -44,8 +49,8 @@ class ImageProcessing:
             # create new image with same size
             new_image = np.zeros((self.row_image, self.column_image, 3), np.uint8)
             # create block
-            for i in range(0, self.row_image, block_dim_tuple_user[0]):
-                for j in range(0, self.column_image, block_dim_tuple_user[1]):
+            for i in range(start=0, stop=self.row_image, step=block_dim_tuple_user[0]):
+                for j in range(start=0, stop=self.column_image, step=block_dim_tuple_user[1]):
                     # get average of block
                     average = np.average(self.image[i:i + block_dim_tuple_user[0], j:j + block_dim_tuple_user[1]],
                                          axis=(0, 1))
@@ -53,13 +58,77 @@ class ImageProcessing:
                     new_image[i:i + block_dim_tuple_user[0], j:j + block_dim_tuple_user[1]] = average
             self.image = new_image
         return self.image
-        # block_row_size, block_column_size = block_dim_tuple
-        #
-        # for i in range(0, self.row_image, block_row_size):
-        #     for j in range(0, self.column_image, block_column_size):
-        #         self.image[i:i + block_row_size, j:j + block_column_size] = \
-        #             cv2.mean(self.image[i:i + block_row_size, j:j + block_column_size])[:int(self.channel_image)]
-        # return self.image
+
+    def reflect_image(self, reflect_type):
+        # reflect_type = 0 horizontal
+        # reflect_type = 1 vertical
+        # reflect_type = -1 both
+        # using numpy array
+        if reflect_type == 0:
+            self.image = self.image[:, ::-1]
+        elif reflect_type == 1:
+            self.image = self.image[::-1, :]
+        elif reflect_type == -1:
+            self.image = self.image[::-1, ::-1]
+        return self.image
+
+    def resize_image(self, width, height):
+        for i in range(0, self.row_image, height):
+            for j in range(0, self.column_image, width):
+                self.image[i:i + height, j:j + width] = self.image[i, j]
+        return self.image
+
+    def crop_image(self, x, y, width, height):
+        self.image = self.image[y:y + height, x:x + width]
+        return self.image
+
+    def shifting_image(self, column, row):
+        # create new image with same size
+        new_image = np.zeros((self.row_image, self.column_image, 3), np.uint8)
+        # create block
+        for i in range(start=0, stop=self.row_image, step=1):
+            for j in range(start=0, stop=self.column_image, step=1):
+                # get average of block
+                try:
+                    new_image[i + row, j + column] = self.image[i, j]
+                except IndexError:
+                    pass
+        self.image = new_image
+        return self.image
+
+    def convert_rgb_image_to_hsi(self):
+        if self.image_gray_scale:
+            print("Image is not RGB")
+            return None
+        # convert GBR to HSI
+        # https://stackoverflow.com/questions/52834537/rgb-to-hsi-conversion-hue-always-calculated-as-0
+        else:
+            with np.errstate(divide='ignore', invalid='ignore'):
+                # get value of each channel
+                b, g, r = cv2.split(self.image)
+                # convert to float
+                b = b.astype(float)
+                g = g.astype(float)
+                r = r.astype(float)
+                # calculate I
+                i = (b + g + r) / 3
+                # calculate S
+                s = 1 - (3 / (b + g + r)) * np.minimum(b, np.minimum(g, r))
+                # calculate H
+                h = np.arccos((0.5 * ((r - g) + (r - b))) / np.sqrt((r - g) ** 2 + (r - b) * (g - b)))
+                # set H
+                h[b > g] = 360 - h[b > g]
+                h = h / 2
+                # create new image
+                new_image = np.zeros((self.row_image, self.column_image, 3), np.uint8)
+                # set value to new image
+                new_image[:, :, 0] = h
+                new_image[:, :, 1] = s
+                new_image[:, :, 2] = i
+                # convert to uint8
+                new_image = new_image.astype(np.uint8)
+                self.image = new_image
+                return self.image
 
     def show_image(self, graphics_view):
         if self.image_gray_scale:
