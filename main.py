@@ -39,6 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_update.clicked.connect(self.update_image)
         self.ui.push_button_reflect.clicked.connect(self.reflect_image)
         self.ui.push_button_crop.clicked.connect(self.crop_image)
+        self.ui.push_button_resize.clicked.connect(self.resize_image)
 
     def crop_image(self):
         # take the values from the user and send them to the function
@@ -47,7 +48,20 @@ class MainWindow(QtWidgets.QMainWindow):
             y1 = int(self.ui.line_edit_vertical.text())
             x2 = int(self.ui.line_edit_width.text())
             y2 = int(self.ui.line_edit_height.text())
-            self.image.crop_image_process(x=x1, y=y1, width=x2, height=y2)
+            self.image.crop_image_process(x1, y1, x2, y2)
+            # bgr to rgb
+            if self.image.image_gray_scale is False:
+                self.image.convert_image_bgr_to_rgb()
+            self.image.show_image(self.ui.graphics_view_output)
+        except ValueError:
+            QMessageBox.warning(self, "Warning", "Please enter a number")
+
+    def resize_image(self):
+        # take the values from the user and send them to the function
+        try:
+            row = int(self.ui.line_edit_height.text())
+            column = int(self.ui.line_edit_width.text())
+            self.image.resize_image_process(row, column)
             self.image.show_image(self.ui.graphics_view_output)
         except ValueError:
             QMessageBox.warning(self, "Warning", "Please enter a number")

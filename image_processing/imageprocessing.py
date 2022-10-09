@@ -68,14 +68,30 @@ class ImageProcessing:
             self.image = self.image[::-1, ::-1]
         return self.image
 
-    def resize_image_process(self, width, height):
-        for i in range(0, self.row_image, height):
-            for j in range(0, self.column_image, width):
-                self.image[i:i + height, j:j + width] = self.image[i, j]
+    def resize_image_process(self, row, column):
+        # resize without cv2.resize
+        # get image size
+        row_image, column_image, channel_image = self.image.shape
+        # create new image with same size
+        new_image = np.zeros((row, column, channel_image), np.uint8)
+        # get resize factor
+        resize_factor_row = row_image / row
+        resize_factor_column = column_image / column
+        # resize image
+        for i in range(row):
+            for j in range(column):
+                new_image[i, j] = self.image[int(i * resize_factor_row), int(j * resize_factor_column)]
+        self.image = new_image
         return self.image
 
-    def crop_image_process(self, x, y, width, height):
-        self.image = self.image[y:y + height, x:x + width]
+    def crop_image_process(self, x1, y1, x2, y2):
+        # create new image with same size
+        new_image = np.zeros((self.row_image, self.column_image, self.channel_image), np.uint8)
+        # crop image
+        for i in range(x1, x2):
+            for j in range(y1, y2):
+                new_image[i, j] = self.image[i, j]
+        self.image = new_image
         return self.image
 
     def shifting_image_process(self, column, row):
