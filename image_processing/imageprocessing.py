@@ -66,7 +66,6 @@ class ImageProcessing:
             self.image = self.image[::-1, :]
         elif reflect_type == "both":
             self.image = self.image[::-1, ::-1]
-        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
         return self.image
 
     def resize_image_process(self, width, height):
@@ -76,8 +75,6 @@ class ImageProcessing:
         return self.image
 
     def crop_image_process(self, x, y, width, height):
-        # x and y is start point of crop rectangle and width (x2) and height (y2) is end point of crop rectangle
-        # crop image
         self.image = self.image[y:y + height, x:x + width]
         return self.image
 
@@ -132,9 +129,11 @@ class ImageProcessing:
     def show_image(self, graphics_view):
         if self.image_gray_scale:
             self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-
-        image = QtGui.QImage(self.image, self.column_image, self.row_image, QImage.Format_BGR888)
-        pixmap = QtGui.QPixmap.fromImage(image)
+        else:
+            self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        # convert to QImage
+        q_image = QImage(self.image, self.column_image, self.row_image, self.column_image * 3, QImage.Format_RGB888)
+        pixmap = QtGui.QPixmap.fromImage(q_image)
         graphics_view.scene = QtWidgets.QGraphicsScene()
         graphics_view.scene.addPixmap(pixmap)
         graphics_view.setScene(graphics_view.scene)

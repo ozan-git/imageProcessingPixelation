@@ -47,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):
             y1 = int(self.ui.line_edit_vertical.text())
             x2 = int(self.ui.line_edit_width.text())
             y2 = int(self.ui.line_edit_height.text())
-            ImageProcessing.crop_image_process(self.image, x=x1, y=y1, width=x2, height=y2)
+            self.image.crop_image_process(x=x1, y=y1, width=x2, height=y2)
             self.image.show_image(self.ui.graphics_view_output)
         except ValueError:
             QMessageBox.warning(self, "Warning", "Please enter a number")
