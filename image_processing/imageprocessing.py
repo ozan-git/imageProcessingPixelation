@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage
 
 
 def check_image_is_gray_scale(image):
@@ -134,33 +134,72 @@ class ImageProcessing:
         if self.image_gray_scale:
             print("Image is not RGB")
             return None
-        # convert GBR to HSI
-        # https://stackoverflow.com/questions/52834537/rgb-to-hsi-conversion-hue-always-calculated-as-0
         else:
             with np.errstate(divide='ignore', invalid='ignore'):
                 # get value of each channel
-                b, g, r = cv2.split(self.image)
-                # convert to float
-                b = b.astype(float)
-                g = g.astype(float)
-                r = r.astype(float)
-                # calculate I
-                i = (b + g + r) / 3
-                # calculate S
-                s = 1 - (3 / (b + g + r)) * np.minimum(b, np.minimum(g, r))
-                # calculate H
-                h = np.arccos((0.5 * ((r - g) + (r - b))) / np.sqrt((r - g) ** 2 + (r - b) * (g - b)))
-                # set H
-                h[b > g] = 360 - h[b > g]
-                h = h / 2
-                # create new image
-                new_image = np.zeros((self.row_image, self.column_image, 3), np.uint8)
-                # set value to new image
-                new_image[:, :, 0] = h
-                new_image[:, :, 1] = s
-                new_image[:, :, 2] = i
-                # convert to uint8
-                new_image = new_image.astype(np.uint8)
+                r = self.image[:, :, 0]
+                g = self.image[:, :, 1]
+                b = self.image[:, :, 2]
+                # get image size
+                row_image, column_image, channel_image = self.image.shape
+                # create new image with same size
+                new_image = np.zeros((row_image, column_image, channel_image), np.uint8)
+                # convert rgb to hsi
+                for k in range(row_image):
+                    for j in range(column_image):
+                        # get value of each channel
+                        r = self.image[k, j, 0]
+                        g = self.image[k, j, 1]
+                        b = self.image[k, j, 2]
+                        # calculate h
+                        h = np.arccos(((0.5 * ((r - g) + (r - b))) / np.sqrt((r - g) ** 2 + (r - b) * (g - b)))) * \
+                            180 / np.pi
+                        if b <= g:
+                            h = h
+                        else:
+                            h = 360 - h
+                        # calculate s
+                        s = 1 - (3 / (r + g + b)) * np.min([r, g, b])
+                        # calculate i
+                        i = (r + g + b) / 3
+                        # set value of each channel
+                        new_image[k, j, 0] = h
+                        new_image[k, j, 1] = s
+                        new_image[k, j, 2] = i
+                self.image = new_image
+                return self.image
+
+    def hsi_to_rgb_process(self):
+        if self.image_gray_scale:
+            print("Image is not HSI")
+            return None
+        else:
+            with np.errstate(divide='ignore', invalid='ignore'):
+                # get value of each channel
+                h = self.image[:, :, 0]
+                s = self.image[:, :, 1]
+                i = self.image[:, :, 2]
+                # get image size
+                row_image, column_image, channel_image = self.image.shape
+                # create new image with same size
+                new_image = np.zeros((row_image, column_image, channel_image), np.uint8)
+                # convert hsi to rgb
+                for k in range(row_image):
+                    for j in range(column_image):
+                        # get value of each channel
+                        h = self.image[k, j, 0]
+                        s = self.image[k, j, 1]
+                        i = self.image[k, j, 2]
+                        # calculate r
+                        r = i + (i * s * np.cos(h * np.pi / 180)) / np.cos((60 - h) * np.pi / 180)
+                        # calculate g
+                        g = i + (i * s * np.cos((h - 120) * np.pi / 180)) / np.cos((180 - h) * np.pi / 180)
+                        # calculate b
+                        b = 3 * i - r - g
+                        # set value of each channel
+                        new_image[k, j, 0] = b
+                        new_image[k, j, 1] = g
+                        new_image[k, j, 2] = r
                 self.image = new_image
                 return self.image
 

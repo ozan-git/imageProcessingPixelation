@@ -44,14 +44,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_rgb_hsi.clicked.connect(self.rgb_hsi)
 
     def rgb_hsi(self):
-        # convert rgb to hsi
-        self.image.rgb_to_hsi_process()
-        self.image.show_image(self.ui.graphics_view_output)
-
-    # convert hsi to rgb
-    # elif self.ui.radio_button_hsi_rgb.isChecked():
-    #     self.image.hsi_to_rgb_process()
-    #     self.image.show_image(self.ui.graphics_view_output)
+        while True:
+            if self.ui.radio_button_vertical.isChecked():
+                self.image.rgb_to_hsi_process()
+            elif self.ui.radio_button_horizontal.isChecked():
+                self.image.hsi_to_rgb_process()
+            self.image.show_image(self.ui.graphics_view_output)
+            break
 
     def shift_image(self):
         try:
