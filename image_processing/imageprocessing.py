@@ -94,21 +94,43 @@ class ImageProcessing:
         self.image = new_image
         return self.image
 
-    def shifting_image_process(self, column, row):
+    def shifting_image_process(self, shifting_type, shift):
         # create new image with same size
-        new_image = np.zeros((self.row_image, self.column_image, 3), np.uint8)
-        # create block
-        for i in range(start=0, stop=self.row_image, step=1):
-            for j in range(start=0, stop=self.column_image, step=1):
-                # get average of block
-                try:
-                    new_image[i + row, j + column] = self.image[i, j]
-                except IndexError:
-                    pass
+        new_image = np.zeros((self.row_image, self.column_image, self.channel_image), np.uint8)
+
+        # if shifting type is right
+        if shifting_type == "right":
+            # shifting image
+            for i in range(self.row_image):
+                for j in range(self.column_image):
+                    if j + shift < self.column_image:
+                        new_image[i, j + shift] = self.image[i, j]
+        # if shifting type is left
+        elif shifting_type == "left":
+            # shifting image
+            for i in range(self.row_image):
+                for j in range(self.column_image):
+                    if j - shift >= 0:
+                        new_image[i, j - shift] = self.image[i, j]
+        # if shifting type is up
+        elif shifting_type == "up":
+            # shifting image
+            for i in range(self.row_image):
+                for j in range(self.column_image):
+                    if i - shift >= 0:
+                        new_image[i - shift, j] = self.image[i, j]
+        # if shifting type is down
+        elif shifting_type == "down":
+            # shifting image
+            for i in range(self.row_image):
+                for j in range(self.column_image):
+                    if i + shift < self.row_image:
+                        new_image[i + shift, j] = self.image[i, j]
+
         self.image = new_image
         return self.image
 
-    def convert_rgb_image_to_hsi_process(self):
+    def rgb_to_hsi_process(self):
         if self.image_gray_scale:
             print("Image is not RGB")
             return None
@@ -154,6 +176,11 @@ class ImageProcessing:
         graphics_view.scene.addPixmap(pixmap)
         graphics_view.setScene(graphics_view.scene)
         graphics_view.show()
+
+    def show_image_new_window(self):
+        cv2.imshow("image", self.image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     def convert_image_bgr_to_rgb(self):
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)

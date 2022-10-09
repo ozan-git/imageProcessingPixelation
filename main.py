@@ -40,6 +40,41 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_reflect.clicked.connect(self.reflect_image)
         self.ui.push_button_crop.clicked.connect(self.crop_image)
         self.ui.push_button_resize.clicked.connect(self.resize_image)
+        self.ui.push_button_shift.clicked.connect(self.shift_image)
+        self.ui.push_button_rgb_hsi.clicked.connect(self.rgb_hsi)
+
+    def rgb_hsi(self):
+        # convert rgb to hsi
+        self.image.rgb_to_hsi_process()
+        self.image.show_image(self.ui.graphics_view_output)
+
+    # convert hsi to rgb
+    # elif self.ui.radio_button_hsi_rgb.isChecked():
+    #     self.image.hsi_to_rgb_process()
+    #     self.image.show_image(self.ui.graphics_view_output)
+
+    def shift_image(self):
+        try:
+            # if line_edit_shift is not empty take the value from the user and send it to the function
+            if self.ui.line_edit_shift.text() == "":
+                return
+
+            shift_value = int(self.ui.line_edit_shift.text())
+            # right or left or up or down
+            if self.ui.radio_button_up.isChecked():
+                self.image.shifting_image_process("up", shift_value)
+            elif self.ui.radio_button_down.isChecked():
+                self.image.shifting_image_process("down", shift_value)
+            elif self.ui.radio_button_left.isChecked():
+                self.image.shifting_image_process("left", shift_value)
+            elif self.ui.radio_button_right.isChecked():
+                self.image.shifting_image_process("right", shift_value)
+            # convert brg to rgb
+            if self.image.image_gray_scale is False:
+                self.image.convert_image_bgr_to_rgb()
+            self.image.show_image(self.ui.graphics_view_output)
+        except ValueError:
+            QMessageBox.warning(self, "Warning", "Please enter a number")
 
     def crop_image(self):
         # take the values from the user and send them to the function
@@ -62,7 +97,10 @@ class MainWindow(QtWidgets.QMainWindow):
             row = int(self.ui.line_edit_height.text())
             column = int(self.ui.line_edit_width.text())
             self.image.resize_image_process(row, column)
-            self.image.show_image(self.ui.graphics_view_output)
+            # convert image bgr to rgb
+            if self.image.image_gray_scale is False:
+                self.image.convert_image_bgr_to_rgb()
+            self.image.show_image_new_window()
         except ValueError:
             QMessageBox.warning(self, "Warning", "Please enter a number")
 
