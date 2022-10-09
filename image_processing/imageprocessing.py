@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QPixmap
 
 
 def check_image_is_gray_scale(image):
@@ -59,30 +59,29 @@ class ImageProcessing:
             self.image = new_image
         return self.image
 
-    def reflect_image(self, reflect_type):
-        # reflect_type = 0 horizontal
-        # reflect_type = 1 vertical
-        # reflect_type = -1 both
-        # using numpy array
-        if reflect_type == 0:
+    def reflect_image_process(self, reflect_type):
+        if reflect_type == "horizontal":
             self.image = self.image[:, ::-1]
-        elif reflect_type == 1:
+        elif reflect_type == "vertical":
             self.image = self.image[::-1, :]
-        elif reflect_type == -1:
+        elif reflect_type == "both":
             self.image = self.image[::-1, ::-1]
+        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
         return self.image
 
-    def resize_image(self, width, height):
+    def resize_image_process(self, width, height):
         for i in range(0, self.row_image, height):
             for j in range(0, self.column_image, width):
                 self.image[i:i + height, j:j + width] = self.image[i, j]
         return self.image
 
-    def crop_image(self, x, y, width, height):
+    def crop_image_process(self, x, y, width, height):
+        # x and y is start point of crop rectangle and width (x2) and height (y2) is end point of crop rectangle
+        # crop image
         self.image = self.image[y:y + height, x:x + width]
         return self.image
 
-    def shifting_image(self, column, row):
+    def shifting_image_process(self, column, row):
         # create new image with same size
         new_image = np.zeros((self.row_image, self.column_image, 3), np.uint8)
         # create block
@@ -96,7 +95,7 @@ class ImageProcessing:
         self.image = new_image
         return self.image
 
-    def convert_rgb_image_to_hsi(self):
+    def convert_rgb_image_to_hsi_process(self):
         if self.image_gray_scale:
             print("Image is not RGB")
             return None
@@ -133,7 +132,6 @@ class ImageProcessing:
     def show_image(self, graphics_view):
         if self.image_gray_scale:
             self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        # Format_Grayscale8 for grayscale images
 
         image = QtGui.QImage(self.image, self.column_image, self.row_image, QImage.Format_BGR888)
         pixmap = QtGui.QPixmap.fromImage(image)
@@ -141,3 +139,6 @@ class ImageProcessing:
         graphics_view.scene.addPixmap(pixmap)
         graphics_view.setScene(graphics_view.scene)
         graphics_view.show()
+
+    def convert_image_bgr_to_rgb(self):
+        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)

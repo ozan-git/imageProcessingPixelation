@@ -37,6 +37,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.open_file)
         self.ui.push_button_update.clicked.connect(self.update_image)
+        self.ui.push_button_reflect.clicked.connect(self.reflect_image)
+        self.ui.push_button_crop.clicked.connect(self.crop_image)
+
+    def crop_image(self):
+        # take the values from the user and send them to the function
+        try:
+            x1 = int(self.ui.line_edit_horizontal.text())
+            y1 = int(self.ui.line_edit_vertical.text())
+            x2 = int(self.ui.line_edit_width.text())
+            y2 = int(self.ui.line_edit_height.text())
+            ImageProcessing.crop_image_process(self.image, x=x1, y=y1, width=x2, height=y2)
+            self.image.show_image(self.ui.graphics_view_output)
+        except ValueError:
+            QMessageBox.warning(self, "Warning", "Please enter a number")
 
     def open_file(self):
         self.file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.bmp)")
@@ -53,6 +67,23 @@ class MainWindow(QtWidgets.QMainWindow):
             self.image.show_image(self.ui.graphics_view_output)
         except ValueError:
             QMessageBox.warning(self, "Warning", "Please enter a number")
+
+    def reflect_image(self):
+        # check radio_button_horizontal and radio_button_vertical state assign the state of these buttons to the
+        # variable and send the variable to the function
+        if self.ui.radio_button_horizontal.isChecked() and self.ui.radio_button_vertical.isChecked():
+            self.image.reflect_image_process(reflect_type="both")
+        elif self.ui.radio_button_horizontal.isChecked():
+            self.image.reflect_image_process(reflect_type="horizontal")
+        elif self.ui.radio_button_vertical.isChecked():
+            self.image.reflect_image_process(reflect_type="vertical")
+        else:
+            QMessageBox.warning(self, "Warning", "Please select a reflection type")
+
+            # convert image bgr to rgb
+        if self.image.image_gray_scale is False:
+            self.image.convert_image_bgr_to_rgb()
+        self.image.show_image(self.ui.graphics_view_output)
 
 
 if __name__ == "__main__":
