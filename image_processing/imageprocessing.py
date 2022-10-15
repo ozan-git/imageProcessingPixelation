@@ -83,6 +83,9 @@ class ImageProcessing:
         self.image = new_image
         return self.image
 
+    # main idea of this method is from
+    # https://stackoverflow.com/questions/12729228/simple-efficient-bilinear-interpolation-of-images-in-numpy-and-python
+    # https://en.wikipedia.org/wiki/Bilinear_interpolation
     def bi_linear_interpolation(self, x, y):
         # calculate new pixel
         x1 = int(x)
@@ -101,7 +104,6 @@ class ImageProcessing:
                     (x - x1) * (y2 - y) * self.image[x2, y1] +\
                     (x - x1) * (y - y1) * self.image[x2, y2]
         return new_pixel
-        # main idea of this method is from https://stackoverflow.com/questions/12729228/simple-efficient-bilinear-interpolation-of-images-in-numpy-and-python
 
     def crop_image_process(self, x1, y1, x2, y2):
         # create new image with same size
