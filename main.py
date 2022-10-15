@@ -93,9 +93,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def resize_image(self):
         # take the values from the user and send them to the function
         try:
-            row = int(self.ui.line_edit_height.text())
-            column = int(self.ui.line_edit_width.text())
-            self.image.resize_image_process(row, column)
+            user_specified_value_row = int(self.ui.line_edit_height.text())
+            user_specified_value_column = int(self.ui.line_edit_width.text())
+            self.image.resize_image_process(user_specified_value_row, user_specified_value_column)
             # convert image bgr to rgb
             if self.image.image_gray_scale is False:
                 self.image.convert_image_bgr_to_rgb()

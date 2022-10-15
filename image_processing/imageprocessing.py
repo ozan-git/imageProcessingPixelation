@@ -68,21 +68,40 @@ class ImageProcessing:
             self.image = self.image[::-1, ::-1]
         return self.image
 
-    def resize_image_process(self, row, column):
-        # resize without cv2.resize
-        # get image size
-        row_image, column_image, channel_image = self.image.shape
+    def resize_image_process(self, user_specified_value_row, user_specified_value_column):
+        # resize image using bi-linear interpolation method without using cv2.resize function
         # create new image with same size
-        new_image = np.zeros((row, column, channel_image), np.uint8)
-        # get resize factor
-        resize_factor_row = row_image / row
-        resize_factor_column = column_image / column
+        new_image = np.zeros((user_specified_value_row, user_specified_value_column, self.channel_image), np.uint8)
         # resize image
-        for i in range(row):
-            for j in range(column):
-                new_image[i, j] = self.image[int(i * resize_factor_row), int(j * resize_factor_column)]
+        for i in range(user_specified_value_row):
+            for j in range(user_specified_value_column):
+                # calculate new pixel
+                x = i * self.row_image / user_specified_value_row
+                y = j * self.column_image / user_specified_value_column
+                new_image[i, j] = self.bi_linear_interpolation(x, y)
+
         self.image = new_image
         return self.image
+
+    def bi_linear_interpolation(self, x, y):
+        # calculate new pixel
+        x1 = int(x)
+        x2 = x1 + 1
+        y1 = int(y)
+        y2 = y1 + 1
+        # calculate new pixel
+        # if  index 512 is out of bounds for axis 1 with size 512
+        if x2 >= self.row_image:
+            x2 = self.row_image - 1
+        if y2 >= self.column_image:
+            y2 = self.column_image - 1
+        # calculate new pixel
+        new_pixel = (x2 - x) * (y2 - y) * self.image[x1, y1] +\
+                    (x2 - x) * (y - y1) * self.image[x1, y2] +\
+                    (x - x1) * (y2 - y) * self.image[x2, y1] +\
+                    (x - x1) * (y - y1) * self.image[x2, y2]
+        return new_pixel
+        # main idea of this method is from https://stackoverflow.com/questions/12729228/simple-efficient-bilinear-interpolation-of-images-in-numpy-and-python
 
     def crop_image_process(self, x1, y1, x2, y2):
         # create new image with same size
