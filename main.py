@@ -35,6 +35,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.block_vertical_user = 0
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.label_value_white.setText("0")
+        self.ui.label_value_black.setText("0")
         self.ui.pushButton.clicked.connect(self.open_file)
         self.ui.push_button_update.clicked.connect(self.update_image)
         self.ui.push_button_reflect.clicked.connect(self.reflect_image)
@@ -42,6 +44,46 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_resize.clicked.connect(self.resize_image)
         self.ui.push_button_shift.clicked.connect(self.shift_image)
         self.ui.push_button_rgb_hsi.clicked.connect(self.rgb_hsi)
+        # sliders
+        self.ui.horizontal_slider_white.setMinimum(0)
+        self.ui.horizontal_slider_white.setMaximum(255)
+        self.ui.horizontal_slider_black.setMinimum(0)
+        self.ui.horizontal_slider_black.setMaximum(255)
+        self.ui.horizontal_slider_white.valueChanged.connect(self.ui.label_value_white.setNum)
+        self.ui.horizontal_slider_black.valueChanged.connect(self.ui.label_value_black.setNum)
+        self.ui.push_button_add_1_white.clicked.connect(lambda: self.ui.horizontal_slider_white.setValue(
+            self.ui.horizontal_slider_white.value() + 1))
+        self.ui.push_button_add_1_black.clicked.connect(lambda: self.ui.horizontal_slider_black.setValue(
+            self.ui.horizontal_slider_black.value() + 1))
+        self.ui.push_button_subtract_1_white.clicked.connect(lambda: self.ui.horizontal_slider_white.setValue(
+            self.ui.horizontal_slider_white.value() - 1))
+        self.ui.push_button_subtract_1_black.clicked.connect(lambda: self.ui.horizontal_slider_black.setValue(
+            self.ui.horizontal_slider_black.value() - 1))
+        # listen push_button_set_transfer_function button click if clicked call transfer_function_process function
+        self.ui.push_button_set_transfer_function.clicked.connect(self.set_transfer_function)
+        # listen push_button_stretch button click if clicked call stretch_process function
+        self.ui.push_button_stretching.clicked.connect(self.stretch_image)
+        # listen push_button_equalization button click if clicked call equalization_process function
+        self.ui.push_button_equalization.clicked.connect(self.equalization_image)
+
+    def equalization_image(self):
+        self.image.histogram_stretching_process()
+        self.image.show_image(self.ui.graphics_view_output)
+
+    def stretch_image(self):
+        self.image.histogram_stretching_process()
+        self.image.show_image(self.ui.graphics_view_output)
+
+    def set_transfer_function(self):
+        # take the values from the user and send them to the function
+        try:
+            white_value = int(self.ui.label_value_white.text())
+            black_value = int(self.ui.label_value_black.text())
+            self.image.transfer_function_process(white_value, black_value)
+            # show returned image from self.image.transfer_function_process(white_value, black_value)
+            self.image.show_image(self.ui.graphics_view_output)
+        except ValueError:
+            QMessageBox.warning(self, "Warning", "Please enter a number")
 
     def rgb_hsi(self):
         while True:
@@ -104,7 +146,9 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.warning(self, "Warning", "Please enter a number")
 
     def open_file(self):
-        self.file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.bmp)")
+        # *.png *.jpg *.bmp *.tif *.tiff
+        self.file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "",
+                                                        "Image Files (*.png *.jpg *.bmp *.tif *.tiff)")
         self.image = ImageProcessing(self.file_path)
         self.image.show_image(self.ui.graphics_view_input)
 

@@ -99,9 +99,9 @@ class ImageProcessing:
         if y2 >= self.column_image:
             y2 = self.column_image - 1
         # calculate new pixel
-        new_pixel = (x2 - x) * (y2 - y) * self.image[x1, y1] +\
-                    (x2 - x) * (y - y1) * self.image[x1, y2] +\
-                    (x - x1) * (y2 - y) * self.image[x2, y1] +\
+        new_pixel = (x2 - x) * (y2 - y) * self.image[x1, y1] + \
+                    (x2 - x) * (y - y1) * self.image[x1, y2] + \
+                    (x - x1) * (y2 - y) * self.image[x2, y1] + \
                     (x - x1) * (y - y1) * self.image[x2, y2]
         return new_pixel
 
@@ -244,3 +244,112 @@ class ImageProcessing:
 
     def convert_image_bgr_to_rgb(self):
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+
+    def histogram_stretching_opencv_process(self):
+        if self.image_gray_scale:
+            self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+            self.image = cv2.equalizeHist(self.image)
+            self.image = cv2.cvtColor(self.image, cv2.COLOR_GRAY2BGR)
+        else:
+            self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+            self.image = cv2.equalizeHist(self.image)
+            self.image = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
+        return self.image
+
+    def histogram_stretching_process(self):
+        # get image size
+        row_image, column_image, channel_image = self.image.shape
+        # create new image with same size
+        new_image = np.zeros((row_image, column_image, channel_image), np.uint8)
+        # get value of each channel
+        b = self.image[:, :, 0]
+        g = self.image[:, :, 1]
+        r = self.image[:, :, 2]
+        # calculate min and max value of each channel
+        r_min = np.min(r)
+        r_max = np.max(r)
+        g_min = np.min(g)
+        g_max = np.max(g)
+        b_min = np.min(b)
+        b_max = np.max(b)
+        # calculate new value of each channel
+        for k in range(row_image):
+            for j in range(column_image):
+                new_image[k, j, 2] = ((b[k, j] - b_min) / (b_max - b_min)) * 250
+                new_image[k, j, 1] = ((g[k, j] - g_min) / (g_max - g_min)) * 250
+                new_image[k, j, 0] = ((r[k, j] - r_min) / (r_max - r_min)) * 250
+        self.image = new_image
+        return self.image
+
+    # cdf(v) = round(((cdf(v) - cdf_min)/(M*N - cdf_min))*(L-1))
+    def histogram_equalization_process(self):
+        # get image size
+        row_image, column_image, channel_image = self.image.shape
+        # create new image with same size
+        new_image = np.zeros((row_image, column_image, channel_image), np.uint8)
+        # get value of each channel
+        r = self.image[:, :, 0]
+        g = self.image[:, :, 1]
+        b = self.image[:, :, 2]
+        # calculate cdf of each channel
+        r_cdf = np.cumsum(r)
+        g_cdf = np.cumsum(g)
+        b_cdf = np.cumsum(b)
+        # calculate min value of cdf of each channel
+        r_cdf_min = np.min(r_cdf)
+        g_cdf_min = np.min(g_cdf)
+        b_cdf_min = np.min(b_cdf)
+        # calculate new value of each channel
+        for k in range(row_image):
+            for j in range(column_image):
+                new_image[k, j, 0] = np.round(
+                    ((r_cdf[k, j] - r_cdf_min) / (row_image * column_image - r_cdf_min)) * 255)
+                new_image[k, j, 1] = np.round(
+                    ((g_cdf[k, j] - g_cdf_min) / (row_image * column_image - g_cdf_min)) * 255)
+                new_image[k, j, 2] = np.round(
+                    ((b_cdf[k, j] - b_cdf_min) / (row_image * column_image - b_cdf_min)) * 255)
+        self.image = new_image
+        return self.image
+
+    # This function applies the desired transfer function to an RGB image. An image will be selected from the list and
+    # the transfer function will be applied to the image. For example, since 184 is displayed, the slide bar for White
+    # level is displayed, so anything above 184 in the image is assigned a value of 255. Since the black scroll bar is
+    # at 51, pixels with a value less than 51 are assigned 0 pixels. There can be a minimum of 3 pixels between the
+    # white and black scrollbar. That is, if the white level is 130, the black level can be a maximum of 127.
+    def transfer_function_process(self, white_level, black_level):
+        # get image size
+        row_image, column_image, channel_image = self.image.shape
+        # create new image with same size
+        new_image = np.zeros((row_image, column_image, channel_image), np.uint8)
+        # get value of each channel
+        r = self.image[:, :, 0]
+        g = self.image[:, :, 1]
+        b = self.image[:, :, 2]
+        # check difference between white level and black level is greater than 3
+        if abs(white_level - black_level) >= 3:
+            # calculate new value of each channel
+            for k in range(row_image):
+                for j in range(column_image):
+                    if r[k, j] > white_level:
+                        new_image[k, j, 0] = 255
+                    elif r[k, j] < black_level:
+                        new_image[k, j, 0] = 0
+                    else:
+                        new_image[k, j, 0] = np.round(((r[k, j] - black_level) / (white_level - black_level)) * 255)
+                    if g[k, j] > white_level:
+                        new_image[k, j, 1] = 255
+                    elif g[k, j] < black_level:
+                        new_image[k, j, 1] = 0
+                    else:
+                        new_image[k, j, 1] = np.round(((g[k, j] - black_level) / (white_level - black_level)) * 255)
+                    if b[k, j] > white_level:
+                        new_image[k, j, 2] = 255
+                    elif b[k, j] < black_level:
+                        new_image[k, j, 2] = 0
+                    else:
+                        new_image[k, j, 2] = np.round(((b[k, j] - black_level) / (white_level - black_level)) * 255)
+            self.image = new_image
+            return self.image
+        else:
+            return self.image
+
