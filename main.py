@@ -67,7 +67,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_equalization.clicked.connect(self.equalization_image)
 
     def equalization_image(self):
-        self.image.histogram_stretching_process()
+        self.image.histogram_equalization_process()
         self.image.show_image(self.ui.graphics_view_output)
 
     def stretch_image(self):

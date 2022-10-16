@@ -157,10 +157,6 @@ class ImageProcessing:
             return None
         else:
             with np.errstate(divide='ignore', invalid='ignore'):
-                # get value of each channel
-                r = self.image[:, :, 0]
-                g = self.image[:, :, 1]
-                b = self.image[:, :, 2]
                 # get image size
                 row_image, column_image, channel_image = self.image.shape
                 # create new image with same size
@@ -196,10 +192,6 @@ class ImageProcessing:
             return None
         else:
             with np.errstate(divide='ignore', invalid='ignore'):
-                # get value of each channel
-                h = self.image[:, :, 0]
-                s = self.image[:, :, 1]
-                i = self.image[:, :, 2]
                 # get image size
                 row_image, column_image, channel_image = self.image.shape
                 # create new image with same size
@@ -245,17 +237,6 @@ class ImageProcessing:
     def convert_image_bgr_to_rgb(self):
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
 
-    def histogram_stretching_opencv_process(self):
-        if self.image_gray_scale:
-            self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-            self.image = cv2.equalizeHist(self.image)
-            self.image = cv2.cvtColor(self.image, cv2.COLOR_GRAY2BGR)
-        else:
-            self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
-            self.image = cv2.equalizeHist(self.image)
-            self.image = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
-        return self.image
-
     def histogram_stretching_process(self):
         # get image size
         row_image, column_image, channel_image = self.image.shape
@@ -288,26 +269,27 @@ class ImageProcessing:
         # create new image with same size
         new_image = np.zeros((row_image, column_image, channel_image), np.uint8)
         # get value of each channel
-        r = self.image[:, :, 0]
+        b = self.image[:, :, 0]
         g = self.image[:, :, 1]
-        b = self.image[:, :, 2]
+        r = self.image[:, :, 2]
         # calculate cdf of each channel
-        r_cdf = np.cumsum(r)
-        g_cdf = np.cumsum(g)
-        b_cdf = np.cumsum(b)
-        # calculate min value of cdf of each channel
-        r_cdf_min = np.min(r_cdf)
-        g_cdf_min = np.min(g_cdf)
+        b_cdf = np.zeros(256)
+        g_cdf = np.zeros(256)
+        r_cdf = np.zeros(256)
+        for k in range(256):
+            b_cdf[k] = np.sum(b <= k)
+            g_cdf[k] = np.sum(g <= k)
+            r_cdf[k] = np.sum(r <= k)
+        # calculate min value of cdf
         b_cdf_min = np.min(b_cdf)
+        g_cdf_min = np.min(g_cdf)
+        r_cdf_min = np.min(r_cdf)
         # calculate new value of each channel
         for k in range(row_image):
             for j in range(column_image):
-                new_image[k, j, 0] = np.round(
-                    ((r_cdf[k, j] - r_cdf_min) / (row_image * column_image - r_cdf_min)) * 255)
-                new_image[k, j, 1] = np.round(
-                    ((g_cdf[k, j] - g_cdf_min) / (row_image * column_image - g_cdf_min)) * 255)
-                new_image[k, j, 2] = np.round(
-                    ((b_cdf[k, j] - b_cdf_min) / (row_image * column_image - b_cdf_min)) * 255)
+                new_image[k, j, 2] = round(((b_cdf[b[k, j]] - b_cdf_min) / ((row_image * column_image) - b_cdf_min)) * 255)
+                new_image[k, j, 1] = round(((g_cdf[g[k, j]] - g_cdf_min) / ((row_image * column_image) - g_cdf_min)) * 255)
+                new_image[k, j, 0] = round(((r_cdf[r[k, j]] - r_cdf_min) / ((row_image * column_image) - r_cdf_min)) * 255)
         self.image = new_image
         return self.image
 
@@ -352,4 +334,3 @@ class ImageProcessing:
             return self.image
         else:
             return self.image
-
