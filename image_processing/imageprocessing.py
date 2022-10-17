@@ -11,6 +11,15 @@ def check_image_is_gray_scale(image):
         return False
 
 
+def apply_desired_transfer_function(pixel, white_level, black_level):
+    if pixel > white_level:
+        return 255
+    elif pixel < black_level:
+        return 0
+    else:
+        return np.round(((pixel - black_level) / (white_level - black_level)) * 255)
+
+
 class ImageProcessing:
     def __init__(self, file_path):
         self.file_path = file_path
@@ -293,6 +302,41 @@ class ImageProcessing:
         self.image = new_image
         return self.image
 
+    def histogram_equalization_process_2(self):
+        row, column, channel = self.image.shape
+        # unique = value of each pixel counts = count of each pixel
+        unique, counts = np.unique(self.image, return_counts=True)
+        # calculate probability of each pixel
+        total = 0
+        new_value_list = []
+        new_pixel_list = []
+        new_cdf_list = []
+        new_equalization_list = []
+        # trip each counts length and calculate probability of each pixel
+        for i in range(len(counts)):
+            # value of pixel (0-255)
+            value_of_pixel = unique[i]
+            # because of 3 channel (RGB) so we need to calculate probability of each channel
+            count_of_pixel = counts[i] = counts[i] / 3
+            new_value_list.append(value_of_pixel)
+            new_pixel_list.append(count_of_pixel)
+
+        for j in range(len(new_pixel_list)):
+            total += new_pixel_list[j]
+            new_cdf_list.append(total)
+            # calculate new value of each pixel
+            min_cdf = np.min(new_cdf_list)
+            value_of_pixel = round(((new_cdf_list[j] - min_cdf) / (row * column - min_cdf)) * 255)
+            new_equalization_list.append(value_of_pixel)
+
+        equalization = dict(zip(new_value_list, new_equalization_list))
+        for k in range(row):
+            for j in range(column):
+                self.image[k, j, 2] = equalization[self.image[k, j, 0]]
+                self.image[k, j, 1] = equalization[self.image[k, j, 1]]
+                self.image[k, j, 0] = equalization[self.image[k, j, 2]]
+        return self.image
+
     # This function applies the desired transfer function to an RGB image. An image will be selected from the list and
     # the transfer function will be applied to the image. For example, since 184 is displayed, the slide bar for White
     # level is displayed, so anything above 184 in the image is assigned a value of 255. Since the black scroll bar is
@@ -307,30 +351,21 @@ class ImageProcessing:
         r = self.image[:, :, 0]
         g = self.image[:, :, 1]
         b = self.image[:, :, 2]
+        tres_hold_1 = black_level
+        tres_hold_2 = white_level
+        if tres_hold_1 > tres_hold_2:
+            tres_hold_1 = white_level
+            tres_hold_2 = black_level
         # check difference between white level and black level is greater than 3
-        if abs(white_level - black_level) >= 3:
+        if abs(tres_hold_2 - tres_hold_1) >= 3:
             # calculate new value of each channel
             for k in range(row_image):
                 for j in range(column_image):
-                    if r[k, j] > white_level:
-                        new_image[k, j, 0] = 255
-                    elif r[k, j] < black_level:
-                        new_image[k, j, 0] = 0
-                    else:
-                        new_image[k, j, 0] = np.round(((r[k, j] - black_level) / (white_level - black_level)) * 255)
-                    if g[k, j] > white_level:
-                        new_image[k, j, 1] = 255
-                    elif g[k, j] < black_level:
-                        new_image[k, j, 1] = 0
-                    else:
-                        new_image[k, j, 1] = np.round(((g[k, j] - black_level) / (white_level - black_level)) * 255)
-                    if b[k, j] > white_level:
-                        new_image[k, j, 2] = 255
-                    elif b[k, j] < black_level:
-                        new_image[k, j, 2] = 0
-                    else:
-                        new_image[k, j, 2] = np.round(((b[k, j] - black_level) / (white_level - black_level)) * 255)
+                    new_image[k, j, 0] = apply_desired_transfer_function(r[k, j], tres_hold_2, tres_hold_1)
+                    new_image[k, j, 1] = apply_desired_transfer_function(g[k, j], tres_hold_2, tres_hold_1)
+                    new_image[k, j, 2] = apply_desired_transfer_function(b[k, j], tres_hold_2, tres_hold_1)
             self.image = new_image
             return self.image
         else:
             return self.image
+
