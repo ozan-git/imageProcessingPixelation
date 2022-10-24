@@ -18,8 +18,10 @@
 
 import sys
 
+import cv2
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from matplotlib import pyplot as plt
 
 from image_processing.imageprocessing import ImageProcessing
 from ui_desing_file.design_file_pixelation import Ui_MainWindow
@@ -65,6 +67,82 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_stretching.clicked.connect(self.stretch_image)
         # listen push_button_equalization button click if clicked call equalization_process function
         self.ui.push_button_equalization.clicked.connect(self.equalization_image)
+        # listen min max average and median buttons
+        self.ui.push_button_min_filter.clicked.connect(self.min_filter)
+        self.ui.push_button_max_filter.clicked.connect(self.max_filter)
+        self.ui.push_button_average_filter.clicked.connect(self.average_filter)
+        self.ui.push_button_median_filter.clicked.connect(self.median_filter)
+        self.ui.push_button_perform_a_to_h.clicked.connect(self.perform_a_to_h)
+
+    def perform_a_to_h(self):
+        # show images in same view 4 then 4 images
+        # image (4,1) is original image
+        # image (4,2) is laplacian of original image
+        # image (4,3) is sharpened image obtained by adding original image and laplacian of original image
+        # image (4,4) sobel gradient of original image
+        # take image from input image
+        image = cv2.imread(self.file_path, 0)
+        original_image = image.copy()
+        laplacian_image = self.image.laplacian_filter(original_image)
+        sharpened_image = self.image.sharpened_filter(original_image)
+        sobel_gradient_image = self.image.sobel_gradient_filter(original_image)
+
+        fig = plt.figure(figsize=(10, 10))
+        rows = 2
+        columns = 2
+
+        fig.add_subplot(rows, columns, 1)
+
+        plt.imshow(original_image, cmap='gray')
+        plt.title("Original Image")
+        plt.axis('off')
+
+        fig.add_subplot(rows, columns, 2)
+
+        plt.imshow(laplacian_image, cmap='gray')
+        plt.title("Laplacian Image")
+        plt.axis('off')
+
+        fig.add_subplot(rows, columns, 3)
+
+        plt.imshow(sharpened_image, cmap='gray')
+        plt.title("Sharpened Image")
+        plt.axis('off')
+
+        fig.add_subplot(rows, columns, 4)
+
+        plt.imshow(sobel_gradient_image, cmap='gray')
+        plt.title("Sobel Gradient Image")
+        plt.axis('off')
+
+
+    def min_filter(self):
+        try:
+            x2 = int(self.ui.line_edit_width.text())
+            y2 = int(self.ui.line_edit_height.text())
+            self.image.min_filter_process(x2, y2)
+            self.image.show_image(self.ui.graphics_view_output)
+        except Exception as e:
+            QMessageBox.warning(self, "Warning", "Please enter valid values")
+
+    def max_filter(self):
+        try:
+            x2 = int(self.ui.line_edit_width.text())
+            y2 = int(self.ui.line_edit_height.text())
+            self.image.max_filter_process(x2, y2)
+            self.image.show_image(self.ui.graphics_view_output)
+        except Exception as e:
+            QMessageBox.warning(self, "Warning", "Please enter valid values")
+
+    def average_filter(self):
+        x2 = int(self.ui.line_edit_width.text())
+        y2 = int(self.ui.line_edit_height.text())
+        self.image.average_filter_process(x2, y2)
+        self.image.show_image(self.ui.graphics_view_output)
+
+    def median_filter(self):
+        self.image.median_filter_process()
+        self.image.show_image(self.ui.graphics_view_output)
 
     def equalization_image(self):
         self.image.histogram_equalization_process()
