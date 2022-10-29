@@ -19,9 +19,11 @@
 import sys
 
 import cv2
+import numpy as np
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
-from matplotlib import pyplot as plt
+
+import image_processing.image_processing_a_to_h_steps as steps_image_processing
 
 from image_processing.imageprocessing import ImageProcessing
 from ui_desing_file.design_file_pixelation import Ui_MainWindow
@@ -75,46 +77,36 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_perform_a_to_h.clicked.connect(self.perform_a_to_h)
 
     def perform_a_to_h(self):
-        # show images in same view 4 then 4 images
-        # image (4,1) is original image
-        # image (4,2) is laplacian of original image
-        # image (4,3) is sharpened image obtained by adding original image and laplacian of original image
-        # image (4,4) sobel gradient of original image
-        # take image from input image
-        image = cv2.imread(self.file_path, 0)
-        original_image = image.copy()
-        laplacian_image = self.image.laplacian_filter(original_image)
-        sharpened_image = self.image.sharpened_filter(original_image)
-        sobel_gradient_image = self.image.sobel_gradient_filter(original_image)
 
-        fig = plt.figure(figsize=(10, 10))
-        rows = 2
-        columns = 2
+        # convert image to numpy array
+        image = cv2.imread(self.file_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        fig.add_subplot(rows, columns, 1)
+        # a) Show original image
+        original_image = image
+        # b) Laplacian of original image
+        laplacian_image = steps_image_processing.laplacian_filter(original_image)
+        # c) Sharpened image obtained by adding original image and laplacian of original image
+        sharpened_image = steps_image_processing.sharpened_filter(original_image)
+        # d) Sobel gradient of original image
+        sobel_gradient_image = steps_image_processing.sobel_gradient_filter(original_image)
+        # e) sobel image smoothed with a 5x5 averaging filter
+        sobel_image_smoothed = steps_image_processing.sobel_image_smoothed(original_image)
+        # f) Mask image formed by the product of c) sharpened image and e) sobel image smoothed.
+        sharpened_product_smoothed = steps_image_processing.apply_filter_sharpened_product_with_smoothed(original_image)
+        # g) Sharpened image obtained by the sum of (a) and (f).
+        sharpened_image_sum = steps_image_processing.apply_mask_filter_sharpened_sum_with_smoothed(original_image)
+        # h) Final result obtained by applying power law transformation to (g).
+        final_result = steps_image_processing.power_law_transformation(original_image)
 
-        plt.imshow(original_image, cmap='gray')
-        plt.title("Original Image")
-        plt.axis('off')
-
-        fig.add_subplot(rows, columns, 2)
-
-        plt.imshow(laplacian_image, cmap='gray')
-        plt.title("Laplacian Image")
-        plt.axis('off')
-
-        fig.add_subplot(rows, columns, 3)
-
-        plt.imshow(sharpened_image, cmap='gray')
-        plt.title("Sharpened Image")
-        plt.axis('off')
-
-        fig.add_subplot(rows, columns, 4)
-
-        plt.imshow(sobel_gradient_image, cmap='gray')
-        plt.title("Sobel Gradient Image")
-        plt.axis('off')
-
+        self.image.show_image_new_window_specified(original_image, "Original Image")
+        self.image.show_image_new_window_specified(laplacian_image, "Laplacian of Original Image")
+        self.image.show_image_new_window_specified(sharpened_image, "Sharpened Image")
+        self.image.show_image_new_window_specified(sobel_gradient_image, "Sobel Gradient of Original Image")
+        self.image.show_image_new_window_specified(sobel_image_smoothed, "Sobel Image Smoothed")
+        self.image.show_image_new_window_specified(sharpened_product_smoothed, "Sharpened Product Smoothed")
+        self.image.show_image_new_window_specified(sharpened_image_sum, "Sharpened Image Sum")
+        self.image.show_image_new_window_specified(final_result, "Final Result")
 
     def min_filter(self):
         try:

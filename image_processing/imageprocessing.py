@@ -20,11 +20,6 @@ def apply_desired_transfer_function(pixel, white_level, black_level):
         return np.round(((pixel - black_level) / (white_level - black_level)) * 255)
 
 
-def sobel_mask(final_image_array):
-    mask = cv2.blur(final_image_array, (5, 5))
-    return mask
-
-
 class ImageProcessing:
     def __init__(self, file_path):
         self.filter_type = None
@@ -249,6 +244,12 @@ class ImageProcessing:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+    # show specified image with specified name in new window
+    def show_image_new_window_specified(self, image, name):
+        cv2.imshow(name, image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
     def convert_image_bgr_to_rgb(self):
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
 
@@ -408,7 +409,7 @@ class ImageProcessing:
         self.image = result_array_image
         return result_array_image
 
-    def average_filter_process(self, row, column):
+    def average_filter_process(self, row, column, image):
         # get image size and create new image with same size
         row_image, column_image, channel_image = self.image.shape
         new_image = np.zeros((row_image, column_image, channel_image), np.uint8)
@@ -437,88 +438,3 @@ class ImageProcessing:
                 new_image[k, j] = temp[4]
         self.image = new_image
         return new_image.astype(np.uint8)
-
-    def laplace(self, image):
-        # get image size and create new image with same size
-        row_image, column_image = image.shape
-        laplacian_filter = [[0, 1, 0], [1, -4, 1], [0, 1, 0]]
-        filtered_image = np.zeros((row_image, column_image), np.uint8)
-        for i in range(row_image - 2):
-            for j in range(column_image - 2):
-                dot_product = np.dot(laplacian_filter, image[i:i + 3, j:j + 3])
-                result_of_sum = sum(map(sum, dot_product))
-                filtered_image[i + 1][j + 1] = result_of_sum
-        "Laplace"
-        filtered_image = cv2.Laplacian(image, cv2.CV_64F)
-        return filtered_image
-
-    @staticmethod
-    def sobels(image):
-        kernel_x = np.array([[1.0, 0.0, -1.0], [2.0, 0.0, -2.0], [1.0, 0.0, -1.0]])
-        kernel_y = np.array([[1.0, 2.0, 1.0], [0.0, 0.0, 0.0], [-1.0, -2.0, -1.0]])
-        [rows, columns] = np.shape(image)
-        sobel_filters = np.zeros(shape=(rows, columns))
-        for i in range(rows - 2):
-            for j in range(columns - 2):
-                gx = np.sum(np.multiply(kernel_x, image[i:i + 3, j:j + 3]))
-                gy = np.sum(np.multiply(kernel_y, image[i:i + 3, j:j + 3]))
-                sobel_filters[i + 1, j + 1] = np.sqrt(gx ** 2 + gy ** 2)
-        sobel_filters = np.require(sobel_filters, np.uint8, 'C')
-        return sobel_filters
-
-    def sobel_filter(self, img):
-        final_image_array = self.sobels(img)
-        return final_image_array
-
-    def apply_sobel_mask(self, image):
-        mask = cv2.blur(image, (5, 5))
-        return mask
-
-    def sobel_gradient_filter(self, img):
-        final_image_array = self.sobels(img)
-        final_image_array = self.apply_sobel_mask(final_image_array)
-        return final_image_array
-
-    def laplacian_filter(self, image):
-        laplacian_array = self.laplace(image)
-        laplacian_array = (((laplacian_array - laplacian_array.min()) / (
-                laplacian_array.max() - laplacian_array.min())) * 255.9).astype(np.uint8)
-        return laplacian_array
-
-    def sharpened_filter(self, image):
-        laplacian_array = self.laplace(image)
-        laplacian_array = np.uint8(np.absolute(laplacian_array))
-        sharpened_filter = cv2.add(image, laplacian_array)
-        return sharpened_filter
-
-    def f_filter(self, image):
-        final_image_array = self.sobels(image)
-        blur_filter = self.apply_sobel_mask(final_image_array)
-        laplacian_array = self.laplace(image)
-        laplacian_array = np.uint8(np.absolute(laplacian_array))
-        shape_filter = cv2.add(image, laplacian_array)
-        masked_image = cv2.bitwise_and(blur_filter, shape_filter)
-        return masked_image
-
-    def g_filter(self, image):
-        final_image_array = self.sobels(image)
-        blur_filter = self.apply_sobel_mask(final_image_array)
-        laplacian_array = self.laplace(image)
-        laplacian_array = np.uint8(np.absolute(laplacian_array))
-        shape_filter = cv2.add(image, laplacian_array)
-        masked_image = cv2.bitwise_and(blur_filter, shape_filter)
-        g_filters = cv2.add(image, masked_image)
-        return g_filters
-
-    def power_low_filter(self, image):
-        final_image_array = self.sobels(image)
-        blur_filter = self.apply_sobel_mask(final_image_array)
-
-        laplacian_array = self.laplace(image)
-        laplacian_array = np.uint8(np.absolute(laplacian_array))
-        shape_filter = cv2.add(image, laplacian_array)
-
-        masked_image = cv2.bitwise_and(blur_filter, shape_filter)
-        g_filters = cv2.add(image, masked_image)
-        power_image = np.array(255 * (g_filters / 255) ** 0.5, dtype='uint8')
-        return power_image
