@@ -24,6 +24,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 import image_processing.image_processing_a_to_h_steps as steps_image_processing
+import image_processing.filtering_in_freq_domain as filtering_in_freq_domain
 
 from image_processing.imageprocessing import ImageProcessing
 from ui_desing_file.design_file_pixelation import Ui_MainWindow
@@ -48,6 +49,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.push_button_resize.clicked.connect(self.resize_image)
         self.ui.push_button_shift.clicked.connect(self.shift_image)
         self.ui.push_button_rgb_hsi.clicked.connect(self.rgb_hsi)
+        self.ui.push_button_highpass_filter.clicked.connect(self.highpass_filter)
+        self.ui.push_button_notch_filter.clicked.connect(self.notch_filter)
+
         # sliders
         self.ui.horizontal_slider_white.setMinimum(0)
         self.ui.horizontal_slider_white.setMaximum(255)
@@ -249,6 +253,19 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.image.image_gray_scale is False:
             self.image.convert_image_bgr_to_rgb()
         self.image.show_image(self.ui.graphics_view_output)
+
+    def highpass_filter(self):
+        filtered_image = filtering_in_freq_domain.highpass_filter_process(self.image.image)
+        # print(filtered_image)
+        print(filtered_image)
+
+    def notch_filter(self):
+        # image = cv2.imread("180403064_image_processing_matlab_hw/HW5_2.tif", cv2.IMREAD_GRAYSCALE)
+        # # show image in graphics_view_input_original_1 in design_file_pixelation
+        # image.show_image(self.ui.graphics_view_input_original_1)
+
+        self.ui.graphics_view_input_original_1.setPixmap(
+
 
 
 if __name__ == "__main__":
